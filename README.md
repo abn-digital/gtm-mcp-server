@@ -1,44 +1,116 @@
-# MCP Server for Google Tag Manager
-[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/stape-io/google-tag-manager-mcp-server)](https://archestra.ai/mcp-catalog/stape-io__google-tag-manager-mcp-server)
+# MCP Server for Google Tag Manager (Local)
 
-This is a server that supports remote MCP connections, with Google OAuth built-in and provides an interface to the Google Tag Manager API.
+Local MCP server for Google Tag Manager API. Runs directly on your machine using stdio transport.
 
+## Quick Start
 
-## Access the remote MCP server from Claude Desktop
+### 1. Clone and Install
 
-Open Claude Desktop and navigate to Settings -> Developer -> Edit Config. This opens the configuration file that controls which MCP servers Claude can access.
+```bash
+git clone abn-digital/gtm-mcp-server.git
+cd gtm-mcp-server
+npm install -omit=optional
+```
 
-Replace the content with the following configuration. Once you restart Claude Desktop, a browser window will open showing your OAuth login page. Complete the authentication flow to grant Claude access to your MCP server. After you grant access, the tools will become available for you to use.
+> Ignore any errors about optional Cloudflare dependencies - they're not needed for local execution.
 
+### 2. Get Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create/select a project
+3. Enable **Google Tag Manager API**
+4. Go to Credentials → Create Credentials → OAuth 2.0 Client ID
+5. Choose "Desktop app" or "Web application"
+6. Add redirect URI: `http://localhost:3000/oauth2callback`
+7. Save the Client ID and Client Secret
+
+### 3. Authenticate
+
+```bash
+npm run auth
+```
+
+This opens your browser for OAuth login. Complete it to save tokens.
+
+### 4. Configure Claude Code
+
+**Windows:** Edit `%USERPROFILE%\.claude.json`
+
+**macOS/Linux:** Edit `~/.claude.json`
+
+Add this configuration:
+
+**Windows:**
 ```json
 {
   "mcpServers": {
-    "gtm-mcp-server": {
+    "gtm": {
       "command": "npx",
       "args": [
-        "-y",
-        "mcp-remote",
-        "https://gtm-mcp.stape.ai/mcp"
-      ]
+        "ts-node",
+        "--project",
+        "C:\\path\\to\\your\\gtm-mcp-server\\tsconfig.local.json",
+        "C:\\path\\to\\your\\gtm-mcp-server\\src\\index-local.ts"
+      ],
+      "env": {
+        "NODE_OPTIONS": "--no-warnings",
+        "GOOGLE_CLIENT_ID": "your-client-id.apps.googleusercontent.com",
+        "GOOGLE_CLIENT_SECRET": "your-client-secret",
+        "GOOGLE_REDIRECT_URI": "http://localhost:3000/oauth2callback"
+      }
     }
   }
 }
 ```
 
-### Troubleshooting
-
-**MCP Server Name Length Limit**
-
-Some MCP clients (like Cursor AI) have a 60-character limit for the combined MCP server name + tool name length. If you use a longer server name in your configuration (e.g., `gtm-mcp-server-your-additional-long-name`), some tools may be filtered out.
-
-To avoid this issue:
-- Use shorter server names in your MCP configuration (e.g., `gtm-mcp-server`)
-
-**Clearing MCP Cache**
-
-[mcp-remote](https://github.com/geelen/mcp-remote#readme) stores all the credential information inside ~/.mcp-auth (or wherever your MCP_REMOTE_CONFIG_DIR points to). If you're having persistent issues, try running:
-You can run rm -rf ~/.mcp-auth to clear any locally stored state and tokens.
+**macOS/Linux:**
+```json
+{
+  "mcpServers": {
+    "gtm": {
+      "command": "npx",
+      "args": [
+        "ts-node",
+        "--project",
+        "/path/to/your/gtm-mcp-server/tsconfig.local.json",
+        "/path/to/your/gtm-mcp-server/src/index-local.ts"
+      ],
+      "env": {
+        "NODE_OPTIONS": "--no-warnings",
+        "GOOGLE_CLIENT_ID": "your-client-id.apps.googleusercontent.com",
+        "GOOGLE_CLIENT_SECRET": "your-client-secret",
+        "GOOGLE_REDIRECT_URI": "http://localhost:3000/oauth2callback"
+      }
+    }
+  }
+}
 ```
-rm -rf ~/.mcp-auth
+
+**⚠️ Important:**
+- Replace **both paths** with your actual repository location
+- Replace the OAuth credentials with your own from step 2
+- Example paths:
+  - Windows: `C:\\Users\\joaqu\\Desktop\\Code\\gtm-mcp-server\\`
+  - macOS/Linux: `/Users/joaqu/Desktop/Code/gtm-mcp-server/`
+
+### 5. Restart Claude Desktop
+
+The GTM tools should now be available!
+
+## Testing
+
+Run the server manually to test:
+
+```bash
+npm run local
 ```
-Then restarting your MCP client.
+
+## Troubleshooting
+
+**Re-authenticate:** Delete `~/.gtm-mcp-tokens.json` and run `npm run auth`
+
+**ARM64/Apple Silicon:** This fork is optimized for ARM64 - no special configuration needed.
+
+**Errors on install:** Optional Cloudflare dependencies may fail - this is expected and safe to ignore.
+
+**Environment variables:** You can use the `env` section in Claude Desktop config instead of `.env` file for easier credential management.
