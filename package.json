@@ -28,8 +28,8 @@
     "dev:cloudflare": "wrangler dev",
     "cf-typegen": "wrangler types --include-env=false",
     "auth": "ts-node --transpileOnly src/authenticate.ts",
-    "local": "ts-node --transpileOnly src/index-local.ts",
-    "local:dev": "ts-node-dev --respawn --transpile-only src/index-local.ts"
+    "local": "ts-node --project tsconfig.local.json src/index-local.ts",
+    "local:dev": "ts-node-dev --project tsconfig.local.json --respawn --transpile-only src/index-local.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.1",
